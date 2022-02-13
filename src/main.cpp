@@ -1,6 +1,8 @@
 #include "Wire.h"
 #include "PubSubClient.h"
 #include "WiFi.h"
+#include <DHT.h>
+#include <DHT_U.h>
 
 const char *ssid = "757863";
 const char *password = "pavkovic98";
@@ -9,29 +11,27 @@ void callback(char *topic, byte *message, unsigned int length);
 WiFiClient espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
-//SHT2x sht;
+
 float temperature = 0;
-#define vrata 16
-#define kanal 0
-#define freq 50
-#define res 12
+#define vrata 5
 #define roleteGore 22
 #define roleteDolje 20
 #define rasvjeta 23
 #define output 24
+#define DHT11PIN 16
+//#define DHTTYPE DHT11
+DHT dht(DHT11PIN, DHT11);
 
 void setup()
 {
+  dht.begin();
   Serial.begin(9600);
-  //sht.begin();
+
   pinMode(vrata, OUTPUT);
   pinMode(roleteGore, OUTPUT);
   pinMode(roleteDolje, OUTPUT);
   pinMode(rasvjeta, OUTPUT);
   pinMode(output, OUTPUT);
-
-      ledcSetup(kanal, freq, res);
-  ledcAttachPin(vrata, kanal);
 
   Serial.println();
   Serial.print("Connecting to ");
@@ -51,8 +51,7 @@ void setup()
 
 void loop()
 {
-  ledcWrite(kanal, 410);
-  //sht.read();
+
   if (!client.connected())
   {
     while (!client.connected())
@@ -78,32 +77,27 @@ void loop()
   }
   client.loop();
 
-  //long now = millis();
-  /* if (now - lastMsg > 5000)
+  long now = millis();
+  if (now - lastMsg > 5000)
   {
-    
-    
-    
-    
+
     lastMsg = now;
-    temperature = sht.getTemperature();
+    temperature = dht.readTemperature();
     char tempString[8];
     dtostrf(temperature, 1, 2, tempString);
     Serial.print("Temperature: ");
     Serial.println(tempString);
-    client.publish("esp32/temperature", tempString);
+    // client.publish("esp32/temperature", dht.readTemperature());
 
-    temperature = sht.getTemperature();
-    char tempString[8];
-    dtostrf(temperature, 1, 2, tempString);
-    Serial.print("Temperature: ");
-    Serial.println(tempString);
-    client.publish("esp32/temperature", tempString);
+    /* temperature = sht.getTemperature();
+     char tempString[8];
+     dtostrf(temperature, 1, 2, tempString);
+     Serial.print("Temperature: ");
+     Serial.println(tempString);
+     client.publish("esp32/temperature", tempString);
 
-
-
-
-  }*/
+ */
+  }
 }
 
 void callback(char *topic, byte *message, unsigned int length)
@@ -171,14 +165,14 @@ void callback(char *topic, byte *message, unsigned int length)
     if (messageTemp == "open")
     {
       Serial.println("OTKLJUČANO");
-      ledcWrite(kanal, 205);
-      delay(10000);
-      ledcWrite(kanal, 410);
+      digitalWrite(vrata, HIGH);
+      delay(3000);
+      digitalWrite(vrata, LOW);
     }
     else
     {
       Serial.println("ZAKLJUČANO");
-      ledcWrite(kanal, 410);
+      digitalWrite(vrata, LOW);
     }
   }
 }
