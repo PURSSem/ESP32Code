@@ -3,9 +3,11 @@
 #include "WiFi.h"
 #include <DHT.h>
 #include <DHT_U.h>
+#include <SPI.h>
+#include <MFRC522.h>
 
-const char *ssid = "757863";
-const char *password = "pavkovic98";
+const char *ssid = "HTEronet_93119D";
+const char *password = "4BRL38YX7T";
 const char *mqtt_server = "broker.emqx.io";
 void callback(char *topic, byte *message, unsigned int length);
 WiFiClient espClient;
@@ -13,18 +15,23 @@ PubSubClient client(espClient);
 long lastMsg = 0;
 
 float temperature = 0;
-#define vrata 5
-#define roleteGore 22
+#define vrata 4
+#define roleteGore 25
 #define roleteDolje 20
-#define rasvjeta 23
+#define rasvjeta 2
 #define output 24
-#define DHT11PIN 16
-//#define DHTTYPE DHT11
+#define DHT11PIN 5
+#define SS_PIN 21
+#define RST_PIN 22
+MFRC522 mfrc522(SS_PIN, RST_PIN);
+
 DHT dht(DHT11PIN, DHT11);
 
 void setup()
 {
   dht.begin();
+  SPI.begin();
+  mfrc522.PCD_Init();
   Serial.begin(9600);
 
   pinMode(vrata, OUTPUT);
@@ -89,14 +96,21 @@ void loop()
     Serial.println(tempString);
     // client.publish("esp32/temperature", dht.readTemperature());
 
-    /* temperature = sht.getTemperature();
-     char tempString[8];
-     dtostrf(temperature, 1, 2, tempString);
-     Serial.print("Temperature: ");
-     Serial.println(tempString);
-     client.publish("esp32/temperature", tempString);
-
- */
+    if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial())
+    {
+      String rfid = "";
+      for (byte i = 0; i < mfrc522.uid.size; i++)
+      {
+        rfid.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+        rfid.concat(String(mfrc522.uid.uidByte[i], HEX));
+      }
+      rfid.toUpperCase();
+      rfid.trim();
+      Serial.print("RFID:");
+      Serial.println(rfid);
+      delay(1000);
+      // client.publish("esp32/rfid", rfid);
+    }
   }
 }
 
