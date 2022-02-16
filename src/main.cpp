@@ -18,7 +18,7 @@ float temperature = 0;
 #define vrata 4
 #define roleteGore 25
 #define roleteDolje 20
-#define rasvjeta 2
+#define rasvjeta 4
 #define output 24
 #define DHT11PIN 5
 #define SS_PIN 21
@@ -64,10 +64,10 @@ void loop()
     while (!client.connected())
     {
       Serial.print("Attempting MQTT connection...");
-      if (client.connect("ESP32Client"))
+      if (client.connect("Ante"))
       {
         Serial.println("connected");
-        client.subscribe("hotel_purs/rasvjeta");
+        client.subscribe("soba101/wc");
         client.subscribe("hotel_purs/rolete_gore");
         client.subscribe("hotel_purs/rolete_dolje");
         client.subscribe("hotel_purs/vrata");
@@ -127,7 +127,7 @@ void callback(char *topic, byte *message, unsigned int length)
   }
   Serial.println();
 
-  if (String(topic) == "hotel_purs/rasvjeta")
+  if (String(topic) == "soba101/wc")
   {
     Serial.print("Changing output to ");
     if (messageTemp == "on")
@@ -137,7 +137,7 @@ void callback(char *topic, byte *message, unsigned int length)
     }
     else if (messageTemp == "off")
     {
-      Serial.println("off");
+      Serial.println("[off]");
       digitalWrite(rasvjeta, LOW);
     }
   }
