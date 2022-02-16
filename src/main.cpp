@@ -16,10 +16,11 @@ long lastMsg = 0;
 
 float temperature = 0;
 #define vrata 4
-#define roleteGore 25
-#define roleteDolje 20
-#define rasvjeta 4
-#define output 24
+#define roleteGore 15
+#define roleteDolje 2
+#define rasvjetasoba 13
+#define templed 12
+#define rasvjetawc 14
 #define DHT11PIN 5
 #define SS_PIN 21
 #define RST_PIN 22
@@ -37,8 +38,9 @@ void setup()
   pinMode(vrata, OUTPUT);
   pinMode(roleteGore, OUTPUT);
   pinMode(roleteDolje, OUTPUT);
-  pinMode(rasvjeta, OUTPUT);
-  pinMode(output, OUTPUT);
+  pinMode(rasvjetawc, OUTPUT);
+  pinMode(templed, OUTPUT);
+  pinMode(rasvjetasoba, OUTPUT);
 
   Serial.println();
   Serial.print("Connecting to ");
@@ -67,11 +69,11 @@ void loop()
       if (client.connect("Ante"))
       {
         Serial.println("connected");
-        client.subscribe("soba101/wc");
-        client.subscribe("hotel_purs/rolete_gore");
-        client.subscribe("hotel_purs/rolete_dolje");
-        client.subscribe("hotel_purs/vrata");
-        client.subscribe("hotel_purs/output1");
+        client.subscribe("hotelpurs/soba101");
+        // client.subscribe("soba101/soba");
+        // client.subscribe("soba101/rolete");
+        // client.subscribe("soba101/vrata");
+        // client.subscribe("soba101/tempset");
       }
       else
       {
@@ -94,7 +96,7 @@ void loop()
     dtostrf(temperature, 1, 2, tempString);
     Serial.print("Temperature: ");
     Serial.println(tempString);
-    // client.publish("esp32/temperature", dht.readTemperature());
+    client.publish("soba101/temp", tempString);
 
     if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial())
     {
@@ -109,7 +111,19 @@ void loop()
       Serial.print("RFID:");
       Serial.println(rfid);
       delay(1000);
-      // client.publish("esp32/rfid", rfid);
+
+      if (rfid == "49 11 01 BA")
+      {
+        Serial.println("OTKLJUČANO");
+        digitalWrite(vrata, HIGH);
+        delay(3000);
+        digitalWrite(vrata, LOW);
+      }
+      else
+      {
+        Serial.println("ZAKLJUČANO");
+        digitalWrite(vrata, LOW);
+      }
     }
   }
 }
@@ -127,61 +141,70 @@ void callback(char *topic, byte *message, unsigned int length)
   }
   Serial.println();
 
-  if (String(topic) == "soba101/wc")
+  if (String(topic) == "hotelpurs/soba101")
   {
-    Serial.print("Changing output to ");
-    if (messageTemp == "on")
+    if (messageTemp == "wcon")
     {
-      Serial.println("on");
-      digitalWrite(rasvjeta, HIGH);
+      Serial.println("wcon");
+      digitalWrite(rasvjetawc, HIGH);
     }
-    else if (messageTemp == "off")
+    else if (messageTemp == "wcoff")
+    {
+      Serial.println("wcoff");
+      digitalWrite(rasvjetawc, LOW);
+    }
+    else if (messageTemp == "sobaon")
+    {
+      Serial.println("sobaon");
+      digitalWrite(rasvjetasoba, HIGH);
+    }
+    else if (messageTemp == "sobaoff")
     {
       Serial.println("[off]");
-      digitalWrite(rasvjeta, LOW);
+      digitalWrite(rasvjetasoba, LOW);
     }
-  }
-  else if (String(topic) == "hotel_purs/rolete_gore")
-  {
-    Serial.print("Changing output to ");
-    if (messageTemp == "on")
+    else if (messageTemp == "rolup")
     {
-      Serial.println("on");
+      Serial.println("up");
       digitalWrite(roleteGore, HIGH);
       delay(5000);
       digitalWrite(roleteGore, LOW);
     }
-    else if (messageTemp == "off")
+    else if (messageTemp == "roldown")
     {
-      Serial.println("off");
-      digitalWrite(roleteGore, LOW);
-    }
-  }
-  else if (String(topic) == "hotel_purs/rolete_dolje")
-  {
-    Serial.print("Changing output to ");
-    if (messageTemp == "on")
-    {
-      Serial.println("on");
+      Serial.println("down");
       digitalWrite(roleteDolje, HIGH);
       delay(5000);
       digitalWrite(roleteDolje, LOW);
     }
-    else if (messageTemp == "off")
-    {
-      Serial.println("off");
-      digitalWrite(roleteDolje, LOW);
-    }
-  }
-  else if (String(topic) == "hotel_purs/vrata")
-  {
-    Serial.print("Changing output to ");
-    if (messageTemp == "open")
+    else if (messageTemp == "open")
     {
       Serial.println("OTKLJUČANO");
       digitalWrite(vrata, HIGH);
       delay(3000);
       digitalWrite(vrata, LOW);
+    }
+    else if (messageTemp == "tempup")
+    {
+      Serial.println("up");
+      for (int i = 0; i < 5; i++)
+      {
+        digitalWrite(templed, HIGH);
+        delay(500);
+        digitalWrite(templed, LOW);
+        delay(500);
+      }
+    }
+    else if (messageTemp == "tempdown")
+    {
+      Serial.println("down");
+      for (int i = 0; i < 5; i++)
+      {
+        digitalWrite(templed, HIGH);
+        delay(200);
+        digitalWrite(templed, LOW);
+        delay(200);
+      }
     }
     else
     {
