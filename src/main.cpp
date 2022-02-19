@@ -16,6 +16,7 @@ long lastMsg = 0;
 
 float temperature = 0;
 #define vrata 4
+#define vratarfid 26
 #define roleteGore 15
 #define roleteDolje 2
 #define rasvjetasoba 13
@@ -36,6 +37,7 @@ void setup()
   Serial.begin(9600);
 
   pinMode(vrata, OUTPUT);
+  pinMode(vratarfid, OUTPUT);
   pinMode(roleteGore, OUTPUT);
   pinMode(roleteDolje, OUTPUT);
   pinMode(rasvjetawc, OUTPUT);
@@ -70,10 +72,6 @@ void loop()
       {
         Serial.println("connected");
         client.subscribe("hotelpurs/soba101");
-        // client.subscribe("soba101/soba");
-        // client.subscribe("soba101/rolete");
-        // client.subscribe("soba101/vrata");
-        // client.subscribe("soba101/tempset");
       }
       else
       {
@@ -115,14 +113,14 @@ void loop()
       if (rfid == "49 11 01 BA")
       {
         Serial.println("OTKLJUČANO");
-        digitalWrite(vrata, HIGH);
+        digitalWrite(vratarfid, HIGH);
         delay(3000);
-        digitalWrite(vrata, LOW);
+        digitalWrite(vratarfid, LOW);
       }
       else
       {
         Serial.println("ZAKLJUČANO");
-        digitalWrite(vrata, LOW);
+        digitalWrite(vratarfid, LOW);
       }
     }
   }
